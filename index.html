@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riverside Innovation Network — Foundation Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg: #0D1B2E;
+  --panel: #182840;
+  --card: #1E3248;
+  --gold: #C9973A;
+  --gold-bright: #F2C860;
+  --white: #F0F4F8;
+  --white-dim: #C0D0E0;
+  --white-muted: #8AAABB;
+  --accent-blue: #3A7CA5;
+  --accent-green: #256B45;
+  --accent-red: #9B2020;
+  --divider: #243545;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--white);
+}
+
+/* PROGRESS BAR */
+#progress-bar {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: var(--gold); width: 0%;
+  transition: width 0.4s ease;
+  z-index: 1000;
+}
+
+/* SLIDES CONTAINER */
+#slides {
+  position: fixed; inset: 0;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  transform: translateY(20px);
+}
+.slide.active {
+  opacity: 1; pointer-events: all;
+  transform: translateY(0);
+}
+.slide.out {
+  opacity: 0; transform: translateY(-20px);
+}
+
+/* SPINE BAR */
+.spine {
+  position: absolute; left: 0; top: 0; bottom: 40px;
+  width: 6px;
+  z-index: 10;
+}
+
+/* FOOTER */
+.footer {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 40px;
+  border-top: 3px solid var(--gold);
+  background: var(--bg);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 24px 0 20px;
+  z-index: 20;
+}
+.footer-left, .footer-center, .footer-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--white-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.footer-center { color: var(--gold); }
+
+/* NAVIGATION ARROWS */
+.nav-arrow {
+  position: fixed;
+  top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px;
+  background: rgba(24,40,64,0.85);
+  border: 1px solid var(--divider);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 500;
+  transition: background 0.2s, border-color 0.2s;
+  color: var(--white-dim);
+  font-size: 18px;
+  user-select: none;
+}
+.nav-arrow:hover { background: rgba(201,151,58,0.2); border-color: var(--gold); color: var(--gold); }
+#nav-prev { left: 16px; }
+#nav-next { right: 16px; }
+
+/* SLIDE DOTS */
+#dots {
+  position: fixed; bottom: 52px; right: 20px;
+  display: flex; gap: 7px; z-index: 500;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--divider); cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active { background: var(--gold); transform: scale(1.3); }
+
+/* KEYBOARD HINT */
+#key-hint {
+  position: fixed; bottom: 52px; left: 50%; transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--white-muted); letter-spacing: 0.12em;
+  z-index: 500;
+  transition: opacity 1s;
+}
+
+/* INFO ICONS */
+.info-btn {
+  position: absolute;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--gold);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--bg); font-size: 13px; font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  z-index: 100;
+  animation: pulse 2s ease-in-out infinite;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.info-btn:hover { background: var(--gold-bright); }
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.info-panel {
+  position: fixed;
+  width: 320px;
+  max-width: 320px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #0B172A;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 16px 14px 16px;
+  z-index: 9999;
+  opacity: 0; pointer-events: none;
+  transform: scale(0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.info-panel.open {
+  opacity: 1; pointer-events: all;
+  transform: scale(1);
+}
+/* Subtle scrollbar inside info panels */
+.info-panel::-webkit-scrollbar { width: 6px; }
+.info-panel::-webkit-scrollbar-track { background: transparent; }
+.info-panel::-webkit-scrollbar-thumb {
+  background: var(--gold); border-radius: 3px; opacity: 0.6;
+}
+.info-panel { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
+
+/* Mobile: open info panels as a bottom sheet */
+@media (max-width: 767px) {
+  .info-panel {
+    left: 0 !important; right: 0 !important;
+    top: auto !important; bottom: 0 !important;
+    width: 100% !important; max-width: 100% !important;
+    max-height: 50vh !important;
+    border-left: none; border-top: 3px solid var(--gold);
+    border-radius: 12px 12px 0 0;
+    transform-origin: bottom center !important;
+  }
+}
+.info-panel-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.info-panel-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; line-height: 1.6;
+  color: var(--white-dim);
+}
+.info-panel-close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; color: var(--white-muted);
+  font-size: 16px; cursor: pointer; line-height: 1;
+}
+.info-panel-close:hover { color: var(--white); }
+
+/* CONCENTRIC CIRCLES */
+.concentric-wrap {
+  position: absolute; pointer-events: none;
+  overflow: hidden;
+}
+.concentric-wrap svg {
+  animation: rotate-slow 60s linear infinite;
+  opacity: 0.12;
+}
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* SECTION LABELS */
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.15em;
+  color: var(--white-muted); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.section-label.gold { color: var(--gold); }
+.section-label.red { color: var(--accent-red); }
+.section-label.blue { color: var(--accent-blue); }
+.section-label.green { color: var(--accent-green); }
+
+/* SLIDE CONTENT AREA */
+.slide-content {
+  position: absolute; inset: 0; bottom: 40px;
+  overflow: hidden;
+}
+
+/* PILL BADGE */
+.pill {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.15em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.pill.red { border-color: var(--accent-red); color: var(--accent-red); }
+.pill.blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+.pill.green { border-color: var(--accent-green); color: var(--accent-green); }
+
+/* GOLD DIVIDER LINE */
+.gold-rule {
+  width: 60px; height: 2px;
+  background: var(--gold);
+  margin: 16px 0;
+}
+.gold-rule.full { width: 100%; }
+
+/* CARD BASE */
+.card {
+  background: var(--card);
+  border-radius: 4px;
+  padding: 18px 20px;
+}
+
+/* COUNT-UP STAT */
+.stat-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ============================================================
+   SLIDE 01 — COVER
+   ============================================================ */
+#slide-01 .slide-content {
+  display: flex;
+}
+.s01-left {
+  width: 40%;
+  background: #111F30;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px 60px 36px;
+  position: relative;
+}
+.s01-divider {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 1px; background: var(--gold);
+}
+.s01-title-line {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: clamp(60px, 7vw, 110px);
+  line-height: 0.92;
+  text-transform: uppercase;
+  display: block;
+}
+.s01-subtitle {
+  font-size: clamp(13px, 1.1vw, 16px);
+  color: var(--white-dim);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.s01-sub2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--white-muted);
+  margin-top: 6px;
+}
+.s01-right {
+  width: 60%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.s01-ghost {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: clamp(100px, 12vw, 160px);
+  color: #162236;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+.s01-right .concentric-wrap {
+  position: absolute; top: -60px; right: -60px;
+  width: 400px; height: 400px;
+}
+
+/* ============================================================
+   SLIDE 02 — THE PROBLEM
+   ============================================================ */
+#slide-02 .slide-content {
+  display: flex; flex-direction: column;
+  padding: 32px 36px 12px 36px;
+}
+.s02-stats {
+  display: flex; gap: 16px; flex: 0 0 auto;
+  height: 46%;
+}
+.s02-stat-card {
+  flex: 1; background: var(--card);
+  border-radius: 6px; padding: 28px 24px;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  position: relative; overflow: hidden;
+}
+.s02-stat-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+}
+.s02-stat-card.gold::before { background: var(--gold); }
+.s02-stat-card.blue::before { background: var(--accent-blue); }
+.s02-stat-card.green::before { background: var(--accent-green); }
+.s02-stat-label {
+  font-size: 14px; color: var(--white-dim);
+  line-height: 1.4; margin-top: 12px;
+}
+.s02-diagnosis {
+  margin-top: 16px; flex: 1;
+  background: var(--panel);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  padding: 20px 24px;
+  position: relative;
+}
+.s02-diagnosis-body {
+  font-size: 15px; color: var(--white-dim);
+  line-height: 1.7; margin-top: 8px;
+  max-width: 820px;
+}
+
+/* ============================================================
+   SLIDE 03 — WHAT IS RIN
+   ============================================================ */
+#slide-03 .slide-content {
+  display: flex; flex-direction: column;
+  padding: 24px 36px 12px 36px;
+}
+.s03-header { margin-bottom: 20px; }
+.s03-panels {
+  display: flex; gap: 16px; height: 36%;
+}
+.s03-panel {
+  flex: 1; border-radius: 4px;
+  padding: 20px 22px;
+  border-left: 4px solid;
+}
+.s03-panel.not { background: #1A1010; border-color: var(--accent-red); }
+.s03-panel.is { background: #0A1510; border-color: var(--accent-green); }
+.s03-panel-items { list-style: none; margin-top: 10px; }
+.s03-panel-items li {
+  font-size: 14px; color: var(--white-dim);
+  padding: 6px 0; display: flex; gap: 10px; align-items: flex-start;
+}
+.s03-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 7px;
+}
+.s03-dot.red { background: var(--accent-red); }
+.s03-dot.green { background: var(--accent-green); }
+.s03-functions-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  color: var(--white-muted); text-transform: uppercase;
+  margin: 16px 0 10px;
+}
+.s03-functions {
+  display: flex; gap: 10px; flex: 1;
+}
+.s03-func-card {
+  flex: 1; background: var(--card);
+  border-radius: 4px; padding: 14px 14px;
+  border-top: 3px solid;
+  opacity: 0; transform: translateY(30px);
+}
+.s03-func-card.animated { opacity: 1; transform: translateY(0); }
+.s03-func-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.12em;
+  color: var(--white-muted); margin-bottom: 6px;
+}
+.s03-func-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.s03-func-body { font-size: 12px; color: var(--white-dim); line-height: 1.5; }
+
+/* ============================================================
+   SLIDE 04 — FOUNDATION
+   ============================================================ */
+#slide-04 .slide-content {
+  display: flex; flex-direction: column;
+  padding: 24px 36px 12px 36px;
+}
+.s04-org-section { margin-bottom: 20px; }
+.s04-org-cards {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 14px;
+}
+.s04-org-card {
+  flex: 1; background: var(--card);
+  border-radius: 4px; padding: 16px 18px;
+  position: relative; overflow: hidden;
+}
+.s04-org-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+}
+.s04-org-card.gold::before { background: var(--gold); }
+.s04-org-card.blue::before { background: var(--accent-blue); }
+.s04-org-card.green::before { background: var(--accent-green); }
+.s04-org-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 28px; line-height: 1;
+  margin-bottom: 4px;
+}
+.s04-org-full { font-size: 11px; color: var(--white-muted); margin-bottom: 8px; }
+.s04-org-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.s04-org-bullets { font-size: 12px; color: var(--white-dim); line-height: 1.6; }
+.s04-arrow {
+  font-size: 22px; color: var(--gold);
+  padding: 0 12px; flex-shrink: 0;
+}
+.s04-funding-section { flex: 1; }
+.s04-funding-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  color: var(--white-muted); text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.s04-funding-inner {
+  display: flex; gap: 20px; height: calc(100% - 30px);
+}
+.s04-funding-cards {
+  display: flex; flex-direction: column; gap: 8px;
+  flex: 1;
+}
+.s04-fund-card {
+  background: var(--card); border-radius: 4px;
+  padding: 10px 14px; flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.s04-fund-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.s04-fund-body { font-size: 12px; color: var(--white-dim); }
+.s04-fund-amount { font-size: 13px; color: var(--white); font-weight: 600; }
+.s04-chart-wrap {
+  width: 220px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.s04-partner-cards {
+  display: flex; gap: 14px; margin-top: 10px;
+  flex: 1; align-items: stretch;
+}
+.s04-partner-card {
+  flex: 1; background: var(--card);
+  border-radius: 4px; padding: 16px 18px;
+  border-top: 3px solid;
+  display: flex; flex-direction: column;
+}
+.s04-partner-card.gold { border-color: var(--gold); }
+.s04-partner-card.blue { border-color: var(--accent-blue); }
+.s04-partner-card.green { border-color: var(--accent-green); }
+.s04-partner-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 22px;
+  text-transform: uppercase; letter-spacing: 0.02em;
+  color: var(--white); margin-bottom: 3px;
+}
+.s04-partner-card.gold .s04-partner-title { color: var(--gold); }
+.s04-partner-card.blue .s04-partner-title { color: var(--accent-blue); }
+.s04-partner-card.green .s04-partner-title { color: var(--accent-green); }
+.s04-partner-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.06em;
+  color: var(--white-muted); margin-bottom: 10px;
+}
+.s04-partner-body {
+  font-size: 13px; color: var(--white-dim); line-height: 1.55;
+}
+
+/* ============================================================
+   SLIDE 05 — WILDFIRE
+   ============================================================ */
+#slide-05 .slide-content { display: flex; }
+.s05-left {
+  width: 40%; background: #110808;
+  padding: 40px 32px 40px 36px;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative;
+}
+.s05-big {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(56px, 7vw, 90px);
+  text-transform: uppercase; line-height: 0.9;
+  color: var(--white);
+}
+.s05-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: clamp(24px, 3vw, 38px);
+  color: var(--accent-red); text-transform: uppercase;
+  margin-top: 4px;
+}
+.s05-ctx-box {
+  margin-top: 16px; padding: 14px 16px;
+  border-left: 3px solid var(--accent-red);
+  background: rgba(155,32,32,0.08);
+  font-size: 13px; color: var(--white-dim); line-height: 1.6;
+}
+.s05-right {
+  width: 60%; padding: 32px 36px;
+  display: flex; flex-direction: column;
+}
+.s05-steps {
+  display: flex; flex-direction: column; gap: 0;
+  flex: 1; margin-top: 16px;
+  position: relative;
+}
+.s05-step {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 10px 0;
+  position: relative;
+}
+.s05-step-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent-red);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 500; color: var(--white);
+  flex-shrink: 0; z-index: 2;
+}
+.s05-step-line {
+  position: absolute; left: 17px; top: 46px;
+  width: 2px; height: calc(100% - 46px + 10px);
+  background: var(--accent-red); opacity: 0.3;
+}
+.s05-step-content { padding-top: 4px; }
+.s05-step-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 16px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--white);
+}
+.s05-step-body { font-size: 12px; color: var(--white-dim); line-height: 1.5; margin-top: 2px; }
+.s05-bottom {
+  background: var(--panel); border-radius: 4px;
+  padding: 14px 18px; margin-top: 12px;
+}
+.s05-bottom-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.15em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.s05-outcomes { display: flex; gap: 16px; }
+.s05-outcome { flex: 1; }
+.s05-outcome-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.s05-outcome-label.winner { color: var(--gold); }
+.s05-outcome-label.non { color: var(--white-muted); }
+.s05-outcome-body { font-size: 12px; color: var(--white-dim); line-height: 1.5; }
+
+/* ============================================================
+   SLIDE 06 — DEFENSE
+   ============================================================ */
+#slide-06 .slide-content { display: flex; }
+.s06-left {
+  width: 40%; background: #080E18;
+  padding: 40px 32px 40px 36px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.s06-big {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(56px, 7vw, 90px);
+  text-transform: uppercase; line-height: 0.9; color: var(--white);
+}
+.s06-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: clamp(24px, 3vw, 38px);
+  color: var(--accent-blue); text-transform: uppercase; margin-top: 4px;
+}
+.s06-epa-box {
+  margin-top: 16px; padding: 14px 16px;
+  border-left: 3px solid var(--accent-blue);
+  background: rgba(58,124,165,0.1);
+}
+.s06-epa-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.14em;
+  color: var(--accent-blue); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.s06-epa-date { font-size: 12px; color: var(--white-dim); margin-bottom: 8px; }
+.s06-epa-hr { border: none; border-top: 1px solid var(--divider); margin: 8px 0; }
+.s06-epa-quote {
+  font-style: italic; font-size: 13px;
+  color: var(--white); line-height: 1.5; margin-bottom: 6px;
+}
+.s06-epa-attr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--white-muted); letter-spacing: 0.05em;
+}
+.s06-right {
+  width: 60%; padding: 32px 36px;
+  display: flex; flex-direction: column;
+}
+.s06-cards { display: flex; flex-direction: column; gap: 10px; flex: 1; margin-top: 14px; }
+.s06-card {
+  background: var(--card); border-radius: 4px;
+  padding: 14px 18px; flex: 1;
+  opacity: 0; transform: translateX(30px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  position: relative;
+}
+.s06-card.animated { opacity: 1; transform: translateX(0); }
+.s06-card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--accent-blue); margin-bottom: 6px;
+}
+.s06-card-body { font-size: 13px; color: var(--white-dim); line-height: 1.55; }
+
+/* ============================================================
+   SLIDE 07 — LOGISTICS
+   ============================================================ */
+#slide-07 .slide-content { display: flex; }
+.s07-left {
+  width: 40%; background: #060F08;
+  padding: 40px 32px 40px 36px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.s07-big {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(52px, 6.5vw, 86px);
+  text-transform: uppercase; line-height: 0.9; color: var(--white);
+}
+.s07-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: clamp(20px, 2.5vw, 32px);
+  color: var(--accent-green); text-transform: uppercase; margin-top: 4px;
+}
+.s07-stat-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(40px, 5vw, 60px);
+  color: var(--accent-green); line-height: 1; margin-top: 16px;
+}
+.s07-stat-unit { font-size: 20px; color: var(--white-dim); margin-top: 2px; }
+.s07-right {
+  width: 60%; padding: 32px 36px;
+  display: flex; flex-direction: column;
+}
+.s07-cards { display: flex; flex-direction: column; gap: 10px; flex: 1; margin-top: 14px; }
+.s07-card {
+  background: var(--card); border-radius: 4px;
+  padding: 14px 18px; flex: 1;
+  position: relative;
+}
+.s07-card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--accent-green); margin-bottom: 5px;
+}
+.s07-card-body { font-size: 13px; color: var(--white-dim); line-height: 1.55; }
+
+/* ============================================================
+   SLIDE 08 — THE VISION
+   ============================================================ */
+#slide-08 .slide-content {
+  display: flex; flex-direction: column;
+  padding: 24px 36px 12px 36px;
+  position: relative;
+}
+.s08-header { margin-bottom: 14px; }
+.s08-cards {
+  display: flex; gap: 16px; flex: 1;
+  align-items: stretch;
+}
+.s08-phase-card {
+  flex: 1; background: var(--card);
+  border-radius: 4px; padding: 20px 18px;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.s08-phase-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.12em;
+  padding: 3px 10px; border-radius: 12px;
+  display: inline-block; margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.s08-phase-badge.gold { background: rgba(201,151,58,0.2); color: var(--gold); }
+.s08-phase-badge.blue { background: rgba(58,124,165,0.2); color: var(--accent-blue); }
+.s08-phase-badge.green { background: rgba(37,107,69,0.2); color: var(--accent-green); }
+.s08-phase-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 26px;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+.s08-phase-bullets { list-style: none; }
+.s08-phase-bullets li {
+  font-size: 13px; color: var(--white-dim);
+  padding: 4px 0; display: flex; gap: 8px;
+  align-items: flex-start;
+}
+.s08-phase-bullets li::before {
+  content: '—'; color: var(--gold);
+  flex-shrink: 0; margin-top: 1px;
+}
+.s08-arrow {
+  display: flex; align-items: center;
+  font-size: 22px; color: var(--gold);
+  padding: 0 8px; flex-shrink: 0;
+  align-self: center;
+}
+.s08-quote {
+  background: var(--panel); border-radius: 4px;
+  padding: 14px 20px; margin-top: 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400; font-size: clamp(14px, 1.6vw, 20px);
+  color: var(--white-dim); font-style: italic; text-align: center;
+}
+.s08-timeline-wrap {
+  margin-top: 10px; padding: 10px 0;
+}
+.s08-timeline-bar {
+  height: 4px; background: var(--divider);
+  border-radius: 2px; position: relative; overflow: hidden;
+}
+.s08-timeline-fill {
+  height: 100%; background: linear-gradient(90deg, var(--gold), var(--accent-green));
+  width: 0%; transition: width 1.5s ease;
+  border-radius: 2px;
+}
+.s08-timeline-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--white-muted); letter-spacing: 0.08em;
+}
+.s08-concentric { position: absolute; bottom: -80px; right: -80px; }
+
+/* ============================================================
+   SLIDE 09 — CLOSING
+   ============================================================ */
+#slide-09 {
+  border-top: 6px solid var(--gold);
+}
+#slide-09 .slide-content {
+  display: flex; flex-direction: column;
+}
+.s09-upper {
+  background: #0A1828;
+  padding: 24px 40px 20px;
+  border-bottom: 1px solid var(--gold);
+  flex: 0 0 auto;
+}
+.s09-timing-cards {
+  display: flex; gap: 12px; margin-top: 14px;
+}
+.s09-timing-card {
+  flex: 1; background: var(--card);
+  border-radius: 4px; padding: 12px 14px;
+  border-top: 2px solid var(--gold);
+}
+.s09-timing-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.s09-timing-body { font-size: 12px; color: var(--white-dim); line-height: 1.5; }
+.s09-lower {
+  flex: 1; padding: 32px 40px 8px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+}
+.s09-line {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 46px);
+  color: var(--white); line-height: 1.15;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s09-line.animated { opacity: 1; transform: translateY(0); }
+.s09-tagline {
+  font-style: italic; font-size: clamp(15px, 2vw, 22px);
+  color: var(--gold); margin-top: 12px; line-height: 1.4;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.s09-tagline.animated { opacity: 1; transform: translateY(0); }
+.s09-contact-row {
+  display: flex; align-items: flex-end;
+  justify-content: space-between; margin-top: 20px;
+}
+.s09-contact-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 20px; color: var(--white);
+}
+.s09-contact-detail {
+  font-size: 13px; color: var(--white-muted);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+}
+.s09-qr-panel {
+  background: #0D1B2E;
+  border: 3px solid var(--gold);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: inline-flex; flex-direction: column;
+  align-items: center;
+}
+.s09-qr-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.2em;
+  color: var(--gold); margin-bottom: 8px;
+}
+.s09-qr-code {
+  width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+}
+.s09-qr-code img, .s09-qr-code canvas { display: block; }
+.s09-qr-email {
+  font-size: 11px; color: var(--white-dim);
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: 0.02em;
+}
+.s09-qr-phone {
+  font-size: 10px; color: var(--white-muted);
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
+}
+.s09-rin-mark { text-align: right; }
+.s09-rin-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 48px;
+  color: var(--gold); line-height: 1;
+}
+.s09-rin-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.15em;
+  color: var(--white-muted); text-transform: uppercase;
+}
+
+/* SLIDE HEADER */
+.slide-header {
+  display: flex; flex-direction: column;
+}
+.slide-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: clamp(36px, 5vw, 60px);
+  line-height: 1; text-transform: uppercase; color: var(--white);
+}
+.slide-subtitle {
+  font-size: 15px; color: var(--white-muted); margin-top: 4px;
+}
+
+/* ============================================================
+   SLIDE — GEOGRAPHY / MAP
+   ============================================================ */
+#slide-map .slide-content {
+  display: flex; flex-direction: column;
+  padding: 24px 36px 12px 36px;
+}
+.s-map-header { margin-bottom: 12px; }
+.s-map-body {
+  display: flex; gap: 16px; flex: 1; min-height: 0;
+}
+.s-map-canvas-wrap {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+#rin-map {
+  flex: 1; width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--divider);
+  background: #0a0f18;
+  min-height: 0;
+}
+.s-map-caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.08em;
+  color: var(--gold); text-align: center;
+  margin-top: 10px; opacity: 0.85;
+}
+.s-map-stats {
+  width: 30%; max-width: 340px;
+  background: var(--panel);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  padding: 22px 24px;
+  display: flex; flex-direction: column;
+  justify-content: center; gap: 22px;
+}
+.s-map-stat-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(34px, 4vw, 52px);
+  line-height: 1; color: var(--gold);
+}
+.s-map-stat-label {
+  font-size: 13px; color: var(--white-dim);
+  margin-top: 4px; line-height: 1.4;
+}
+.s-map-stat:nth-child(2) .s-map-stat-num { color: var(--accent-blue); }
+.s-map-stat:nth-child(3) .s-map-stat-num { color: var(--accent-green); }
+
+/* Leaflet dark popup styling */
+.leaflet-popup-content-wrapper {
+  background: #0B172A; color: var(--white-dim);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+.leaflet-popup-content {
+  margin: 12px 14px; font-family: 'Inter', sans-serif; font-size: 12px;
+}
+.leaflet-popup-tip { background: #0B172A; }
+.leaflet-popup-close-button { color: var(--white-muted) !important; }
+.rin-popup-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 4px;
+}
+.leaflet-container { background: #0a0f18; }
+.leaflet-control-attribution {
+  background: rgba(13,27,46,0.7) !important;
+  color: var(--white-muted) !important; font-size: 9px;
+}
+.leaflet-control-attribution a { color: var(--white-muted) !important; }
+
+/* Pulsing map markers */
+.rin-marker {
+  position: relative; width: 14px; height: 14px;
+}
+.rin-marker-dot {
+  position: absolute; top: 50%; left: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
+  transform: translate(-50%,-50%);
+  box-shadow: 0 0 8px currentColor;
+  z-index: 2;
+}
+.rin-marker-ring {
+  position: absolute; top: 50%; left: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--gold);
+  transform: translate(-50%,-50%);
+  animation: rin-ripple 2s ease-out infinite;
+  z-index: 1;
+}
+@keyframes rin-ripple {
+  0%   { width: 12px; height: 12px; opacity: 0.9; }
+  100% { width: 46px; height: 46px; opacity: 0; }
+}
+@media (max-width: 767px) {
+  #slide-map .s-map-body { flex-direction: column; }
+  #slide-map .s-map-stats { width: 100%; max-width: none; flex-direction: row; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div id="slides">
+
+  <!-- ===================== SLIDE 01 — COVER ===================== -->
+  <div class="slide active" id="slide-01" data-label="COVER" data-index="0">
+    <div class="slide-content">
+      <div class="s01-left">
+        <div class="s01-divider"></div>
+        <div class="pill" id="s01-badge">FOUNDATION PLAN</div>
+        <div id="s01-title">
+          <span class="s01-title-line" style="color:var(--white)">RIVERSIDE</span>
+          <span class="s01-title-line" style="color:var(--gold)">INNOVATION</span>
+          <span class="s01-title-line" style="color:var(--white)">NETWORK</span>
+        </div>
+        <div class="gold-rule" style="margin-top:20px"></div>
+        <div class="s01-subtitle" id="s01-sub">Coordination · Challenge Cohorts · Federal Grant Strategy</div>
+        <div class="s01-sub2" id="s01-sub2">Inland Empire · California · June 2026</div>
+
+        <!-- Info Icon 1 -->
+        <div style="position:relative;margin-top:16px;display:inline-block">
+          <button class="info-btn" style="position:relative;top:0;left:0" onclick="toggleInfo('i01a',event)">ℹ</button>
+          <div class="info-panel" id="i01a" style="top:34px;left:0">
+            <button class="info-panel-close" onclick="closeInfo('i01a')">×</button>
+            <div class="info-panel-title">What is a GovTech Cohort?</div>
+            <div class="info-panel-body">A government agency defines a real operational problem. RIN publishes it as an open national challenge. 5 startups are selected, spend 12 weeks building a solution with the government customer in the room, and pitch at Demo Day. The winner gets a real paid pilot contract.</div>
+          </div>
+        </div>
+
+        <!-- Info Icon 2 -->
+        <div style="position:relative;margin-top:12px;display:inline-block">
+          <button class="info-btn" style="position:relative;top:0;left:0" onclick="toggleInfo('i01b',event)">ℹ</button>
+          <div class="info-panel" id="i01b" style="top:34px;left:0">
+            <button class="info-panel-close" onclick="closeInfo('i01b')">×</button>
+            <div class="info-panel-title">Why Inland Empire?</div>
+            <div class="info-panel-body">Riverside County is the 4th largest county in California with 2.4M residents, growing at 3% annually vs the state's 0.4%. It has NSWC Corona (3,900 engineers), March ARB (9,600 employees), Cal Fire Southern Region HQ, and the World Logistics Center (40.6M sqft) — all within 30 miles of each other.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s01-right">
+        <div class="concentric-wrap" style="width:380px;height:380px;top:-50px;right:-50px">
+          <svg viewBox="0 0 380 380" width="380" height="380" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="190" cy="190" r="60" fill="none" stroke="#C9973A" stroke-width="1"/>
+            <circle cx="190" cy="190" r="95" fill="none" stroke="#C9973A" stroke-width="0.8"/>
+            <circle cx="190" cy="190" r="130" fill="none" stroke="#C9973A" stroke-width="0.6"/>
+            <circle cx="190" cy="190" r="165" fill="none" stroke="#C9973A" stroke-width="0.5"/>
+            <circle cx="190" cy="190" r="190" fill="none" stroke="#C9973A" stroke-width="0.4"/>
+          </svg>
+        </div>
+        <div class="s01-ghost" id="s01-ghost">RIN</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">COVER</span>
+      <span class="footer-right">01 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 02 — THE PROBLEM ===================== -->
+  <div class="slide" id="slide-02" data-label="THE PROBLEM" data-index="1">
+    <div class="spine" style="background:var(--gold)"></div>
+    <div class="slide-content" style="padding-left:16px">
+      <div style="display:flex;flex-direction:column;height:100%;padding:28px 36px 12px 36px">
+        <div class="slide-header" style="margin-bottom:18px">
+          <div class="section-label">The Challenge</div>
+          <div class="slide-title">THE PROBLEM</div>
+        </div>
+        <div class="s02-stats">
+          <div class="s02-stat-card gold" style="position:relative">
+            <div class="stat-num" style="font-size:clamp(48px,6vw,80px);color:var(--gold)" data-countup="80000" data-suffix="" id="cu-80k">0</div>
+            <div class="s02-stat-label">Educated workers commute out of the Inland Empire every single day</div>
+            <button class="info-btn" style="position:absolute;top:12px;right:12px;animation:pulse 2s ease-in-out infinite" onclick="toggleInfo('i02a',event)">ℹ</button>
+            <div class="info-panel" id="i02a" style="top:46px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i02a')">×</button>
+              <div class="info-panel-title">Sacramento Comparison</div>
+              <div class="info-panel-body">Sacramento County holds roughly 7.6x Riverside's cumulative DoD contract value despite similar proximity to federal assets. The gap is not resources — it is coordination.</div>
+            </div>
+          </div>
+          <div class="s02-stat-card blue" style="position:relative">
+            <div class="stat-num" style="font-size:clamp(48px,6vw,80px);color:var(--accent-blue)" data-countup="23" data-suffix="%" id="cu-23">0%</div>
+            <div class="s02-stat-label">Bachelor's degree rate vs 35–40% in LA and San Diego</div>
+            <button class="info-btn" style="position:absolute;top:12px;right:12px;animation:pulse 2s ease-in-out infinite" onclick="toggleInfo('i02b',event)">ℹ</button>
+            <div class="info-panel" id="i02b" style="top:46px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i02b')">×</button>
+              <div class="info-panel-title">Brain Drain in Numbers</div>
+              <div class="info-panel-body">UCR, CBU (California Baptist University), and RCCD (Riverside Community College District) produce thousands of graduates annually. The majority leave the county within 2 years of graduating for jobs in LA, San Diego, or the Bay Area.</div>
+            </div>
+          </div>
+          <div class="s02-stat-card green" style="position:relative">
+            <div class="stat-num" style="font-size:clamp(48px,6vw,80px);color:var(--accent-green)" data-countup="9" data-suffix="+" id="cu-9">0+</div>
+            <div class="s02-stat-label">Innovation centers operating without a coordination layer</div>
+          </div>
+        </div>
+        <div class="s02-diagnosis" style="position:relative">
+          <div class="section-label gold">The Core Diagnosis</div>
+          <div class="s02-diagnosis-body">Riverside produces the research and absorbs the subcontracts — but loses companies at the commercialization stage. The talent, the IP, and the economic value migrate to LA, San Diego, and the Bay Area. No single entity's job is to stop that from happening.</div>
+          <button class="info-btn" style="position:absolute;top:14px;right:14px;animation:pulse 2s ease-in-out infinite" onclick="toggleInfo('i02c',event)">ℹ</button>
+          <div class="info-panel" id="i02c" style="top:46px;right:0;left:auto;transform-origin:top right">
+            <button class="info-panel-close" onclick="closeInfo('i02c')">×</button>
+            <div class="info-panel-title">The Commercialization Gap</div>
+            <div class="info-panel-body">Riverside does the bookends — UCR research on one end, tier-2/3 defense subcontracts on the other. The middle layer — where IP becomes a product and a product becomes a company that stays — is structurally missing. RIN fills that middle.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">THE PROBLEM</span>
+      <span class="footer-right">02 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE — GEOGRAPHY (MAP) ===================== -->
+  <div class="slide" id="slide-map" data-label="GEOGRAPHY" data-index="2">
+    <div class="spine" style="background:var(--gold)"></div>
+    <div class="slide-content" style="padding-left:16px">
+      <div class="s-map-header">
+        <div class="section-label">Geography</div>
+        <div class="slide-title">WHERE IT ALL HAPPENS</div>
+        <div class="slide-subtitle">Every asset within 30 miles of each other</div>
+      </div>
+      <div class="s-map-body">
+        <div class="s-map-canvas-wrap">
+          <div id="rin-map"></div>
+          <div class="s-map-caption">All distances verified · Data sources: RivCoED EDSP 2026–2030 · UCR Office of Research · NSWC Corona EPA May 2026</div>
+        </div>
+        <div class="s-map-stats">
+          <div class="s-map-stat">
+            <div class="s-map-stat-num">&lt; 30 MILES</div>
+            <div class="s-map-stat-label">separates every key asset</div>
+          </div>
+          <div class="s-map-stat">
+            <div class="s-map-stat-num">2.4M</div>
+            <div class="s-map-stat-label">county population</div>
+          </div>
+          <div class="s-map-stat">
+            <div class="s-map-stat-num">$126B</div>
+            <div class="s-map-stat-label">Gross Regional Product</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">GEOGRAPHY</span>
+      <span class="footer-right">03 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 03 — WHAT IS RIN ===================== -->
+  <div class="slide" id="slide-03" data-label="WHAT IS RIN" data-index="3">
+    <div class="spine" style="background:var(--gold)"></div>
+    <div class="slide-content" style="padding-left:16px">
+      <div class="s03-header" style="padding:24px 36px 0">
+        <div class="section-label">Identity</div>
+        <div class="slide-title">WHAT IS RIN</div>
+        <div class="slide-subtitle">Not an incubator. Not a building. A coordination layer.</div>
+      </div>
+      <div style="padding:0 36px;flex:1;display:flex;flex-direction:column;height:calc(100% - 110px)">
+        <div class="s03-panels" style="position:relative">
+          <div class="s03-panel not" style="position:relative">
+            <div class="section-label red">IT IS NOT</div>
+            <ul class="s03-panel-items">
+              <li><span class="s03-dot red"></span>A new incubator or startup lab</li>
+              <li><span class="s03-dot red"></span>A replacement for ExCITE or OASIS</li>
+              <li><span class="s03-dot red"></span>A general fund expense</li>
+            </ul>
+            <button class="info-btn" style="position:absolute;bottom:12px;right:12px" onclick="toggleInfo('i03a',event)">ℹ</button>
+            <div class="info-panel" id="i03a" style="bottom:46px;right:0;left:auto;transform-origin:bottom right">
+              <button class="info-panel-close" onclick="closeInfo('i03a')">×</button>
+              <div class="info-panel-title">Why Not an Incubator?</div>
+              <div class="info-panel-body">Riverside already has 9+ innovation centers: ExCITE, OASIS Park, IE Tech Bridge, UCR EPIC SBDC, Murrieta Innovation Center, TVE2, Pass Business Hub, Palm Desert iHub, Coachella Valley iHub, SCEIN. Building another would duplicate what already exists. RIN coordinates above them.</div>
+            </div>
+          </div>
+          <div class="s03-panel is">
+            <div class="section-label green">IT IS</div>
+            <ul class="s03-panel-items">
+              <li><span class="s03-dot green"></span>The single front door for government customers</li>
+              <li><span class="s03-dot green"></span>The layer that connects existing centers to each other</li>
+              <li><span class="s03-dot green"></span>The entity that runs government challenge cohorts</li>
+            </ul>
+          </div>
+        </div>
+        <div class="s03-functions-label">Five Core Functions</div>
+        <div class="s03-functions">
+          <div class="s03-func-card" id="fc1" style="border-color:var(--gold);transition-delay:0s">
+            <div class="s03-func-num">01</div>
+            <div class="s03-func-title" style="color:var(--gold)">SINGLE FRONT DOOR</div>
+            <div class="s03-func-body">One contact point for all government and industry partners</div>
+          </div>
+          <div class="s03-func-card" id="fc2" style="border-color:var(--accent-blue);transition-delay:0.1s;transition:opacity 0.5s 0.1s,transform 0.5s 0.1s">
+            <div class="s03-func-num">02</div>
+            <div class="s03-func-title" style="color:var(--accent-blue)">GOVTECH COHORTS</div>
+            <div class="s03-func-body">Agency problems. 12-week sprints. Pilot contracts.</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i03b',event)">ℹ</button>
+            <div class="info-panel" id="i03b" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i03b')">×</button>
+              <div class="info-panel-title">Different from a Pitch Competition?</div>
+              <div class="info-panel-body">Pitch competitions give startups $2,500–$30,000 in prize money and send them home. RIN's challenge cohorts give startups a government customer in the room for 12 weeks and end with a signed pilot contract worth $250K–$1M+. The customer is present from day one, not at the end as a hoped-for buyer.</div>
+            </div>
+          </div>
+          <div class="s03-func-card" id="fc3" style="border-color:var(--gold);transition-delay:0.2s;transition:opacity 0.5s 0.2s,transform 0.5s 0.2s">
+            <div class="s03-func-num">03</div>
+            <div class="s03-func-title" style="color:var(--gold)">FEDERAL GRANT COORDINATOR</div>
+            <div class="s03-func-body">EDA Tech Hubs · NSF Engines · Defense funds</div>
+          </div>
+          <div class="s03-func-card" id="fc4" style="border-color:var(--accent-green);transition-delay:0.3s;transition:opacity 0.5s 0.3s,transform 0.5s 0.3s">
+            <div class="s03-func-num">04</div>
+            <div class="s03-func-title" style="color:var(--accent-green)">STARTUP ROUTING</div>
+            <div class="s03-func-body">GovTech intake · Defense pipeline · Warm handoffs</div>
+          </div>
+          <div class="s03-func-card" id="fc5" style="border-color:var(--accent-red);transition-delay:0.4s;transition:opacity 0.5s 0.4s,transform 0.5s 0.4s;position:relative">
+            <div class="s03-func-num">05</div>
+            <div class="s03-func-title" style="color:var(--accent-red)">GRADUATE RETENTION</div>
+            <div class="s03-func-body">One scoreboard · One metric · Regional talent</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i03c',event)">ℹ</button>
+            <div class="info-panel" id="i03c" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i03c')">×</button>
+              <div class="info-panel-title">Why This Single Metric?</div>
+              <div class="info-panel-body">Every program RIN runs — challenge cohorts, grant applications, startup routing — ultimately asks the same question: are educated people staying in Riverside to work? That is the scoreboard. If the number goes up over 3 years, the program is working. If it doesn't, everything else is theater.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">WHAT IS RIN</span>
+      <span class="footer-right">04 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 04 — FOUNDATION ===================== -->
+  <div class="slide" id="slide-04" data-label="FOUNDATION" data-index="4">
+    <div class="spine" style="background:var(--gold)"></div>
+    <div class="slide-content" style="padding-left:16px">
+      <div style="display:flex;flex-direction:column;height:100%;padding:24px 36px 12px 36px">
+        <div class="slide-header" style="margin-bottom:16px">
+          <div class="section-label">Structure</div>
+          <div class="slide-title">FOUNDATION</div>
+          <div class="slide-subtitle">Structure · Governance · Funding Model</div>
+        </div>
+        <div class="s04-org-section">
+          <div class="section-label" style="color:var(--white-muted)">Organizational Structure</div>
+          <div class="s04-org-cards">
+            <div class="s04-org-card gold" style="position:relative">
+              <div class="s04-org-name">RivCoED</div>
+              <div class="s04-org-full">Riverside County Office of Economic Development</div>
+              <div class="s04-org-role" style="color:var(--gold)">Managing Partner</div>
+              <div class="s04-org-bullets">Final authority · Houses the office<br>EDSP implementation · Signs, hires, decides</div>
+              <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i04a',event)">ℹ</button>
+              <div class="info-panel" id="i04a" style="top:36px;right:0;left:auto;transform-origin:top right">
+                <button class="info-panel-close" onclick="closeInfo('i04a')">×</button>
+                <div class="info-panel-title">Why RivCoED Holds Authority</div>
+                <div class="info-panel-body">RivCoED manages the EDSP 2026-2030, coordinates all 9+ existing innovation centers, and is the county's official economic development arm. Without RivCoED, RIN is a concept. With them, it is county policy.</div>
+              </div>
+            </div>
+            <div class="s04-arrow">→</div>
+            <div class="s04-org-card blue" style="position:relative">
+              <div class="s04-org-name">RIN</div>
+              <div class="s04-org-full">Riverside Innovation Network</div>
+              <div class="s04-org-role" style="color:var(--accent-blue)">Operating Program</div>
+              <div class="s04-org-bullets">Challenge cohorts · Grant coordination<br>Startup routing · Program design</div>
+            </div>
+            <div class="s04-arrow">→</div>
+            <div class="s04-org-card green" style="position:relative">
+              <div class="s04-org-name">UCR</div>
+              <div class="s04-org-full">University of California, Riverside</div>
+              <div class="s04-org-role" style="color:var(--accent-green)">Research Anchor</div>
+              <div class="s04-org-bullets">OASIS · EPIC SBDC<br>Federal grant research partner · Research capacity</div>
+              <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i04c',event)">ℹ</button>
+              <div class="info-panel" id="i04c" style="top:36px;right:0;left:auto;transform-origin:top right">
+                <button class="info-panel-close" onclick="closeInfo('i04c')">×</button>
+                <div class="info-panel-title">UCR's Existing Infrastructure</div>
+                <div class="info-panel-body">UCR already leads the Inland SoCal Accelerate Hub (I-HUB) covering Riverside, San Bernardino, and Imperial counties. UCR's EPIC SBDC supported 169 startups in 2023, helping raise $16M and generate $30M in revenue and 422 jobs. RIN adds the government challenge and OTA procurement layer that I-HUB was not designed for.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="s04-funding-section">
+          <div class="s04-funding-label">Key Partnerships</div>
+          <div class="s04-partner-cards">
+            <div class="s04-partner-card gold">
+              <div class="s04-partner-title">EDSP 2026–2030</div>
+              <div class="s04-partner-sub">Economic Development Strategic Plan</div>
+              <div class="s04-partner-body">RIN operationalizes the innovation pillar of Riverside County's 5-year strategic plan — the plan the community spent 18 months building across 125 stakeholders.</div>
+            </div>
+            <div class="s04-partner-card blue">
+              <div class="s04-partner-title">UCR × NSWC Corona EPA</div>
+              <div class="s04-partner-sub">Education Partnership Agreement — May 8, 2026</div>
+              <div class="s04-partner-body">The formal research and education alliance between UC Riverside and the Naval Surface Warfare Center, Corona Division — signed May 8, 2026 at the Mission Inn. RIN is the next logical step.</div>
+            </div>
+            <div class="s04-partner-card green">
+              <div class="s04-partner-title">Innovation Month — Year 9</div>
+              <div class="s04-partner-sub">April 2026 · Fantasy Springs Resort Casino</div>
+              <div class="s04-partner-body">RivCoED's annual innovation showcase — now in its 9th year, partnered with Startup World Cup's $1M global prize program. RIN amplifies what already works.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">FOUNDATION</span>
+      <span class="footer-right">05 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 05 — WILDFIRE ===================== -->
+  <div class="slide" id="slide-05" data-label="WILDFIRE" data-index="5">
+    <div class="spine" style="background:var(--accent-red)"></div>
+    <div class="slide-content" style="padding-left:6px">
+      <div class="s05-left">
+        <div class="pill red">YEAR 01</div>
+        <div class="s05-big">WILDFIRE</div>
+        <div class="s05-sub">TECHNOLOGY</div>
+        <div class="gold-rule" style="margin:14px 0"></div>
+        <div class="section-label red">Government Customer</div>
+        <div style="font-size:18px;font-weight:600;color:var(--white);margin-bottom:2px">Cal Fire · Southern Region HQ</div>
+        <div style="font-size:13px;color:var(--white-dim);margin-bottom:2px">California Dept. of Forestry &amp; Fire Protection</div>
+        <div style="font-size:12px;color:var(--white-muted);margin-bottom:14px">$4.2B annual budget · 95 fire stations</div>
+        <div class="s05-ctx-box" style="position:relative">
+          Cal Fire's Southern Region HQ is physically located in Riverside. The government customer is already here. No relationship-building required — just a program.
+          <button class="info-btn" style="position:absolute;top:-10px;right:-10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i05a',event)">ℹ</button>
+          <div class="info-panel" id="i05a" style="top:16px;right:-330px;transform-origin:top left">
+            <button class="info-panel-close" onclick="closeInfo('i05a')">×</button>
+            <div class="info-panel-title">Why Wildfire First?</div>
+            <div class="info-panel-body">California is the global front line of the wildfire crisis. Cal Fire protects 31 million acres and responds to thousands of fires annually. Technology built and tested against real California wildfire conditions is immediately credible to every fire agency in the US, Canada, and Australia. Winning here creates instant national market access.</div>
+          </div>
+        </div>
+      </div>
+      <div class="s05-right">
+        <div class="section-label gold">Challenge Cohort Process</div>
+        <div class="s05-steps">
+          <div class="s05-step">
+            <div>
+              <div class="s05-step-circle">01</div>
+              <div class="s05-step-line"></div>
+            </div>
+            <div class="s05-step-content" style="position:relative">
+              <div class="s05-step-title">DEFINE</div>
+              <div class="s05-step-body">Agency identifies real operational problem with real budget</div>
+              <button class="info-btn" style="position:absolute;top:0;right:-36px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i05c',event)">ℹ</button>
+              <div class="info-panel" id="i05c" style="top:0;right:-356px;transform-origin:top left">
+                <button class="info-panel-close" onclick="closeInfo('i05c')">×</button>
+                <div class="info-panel-title">Real Problem Example</div>
+                <div class="info-panel-body">Cal Fire needs real-time crew location tracking that works without cell towers during active wildfire suppression. Current radio systems fail in terrain. GPS devices are expensive and disposable. A startup that solves this for Cal Fire has a product immediately relevant to fire agencies in 44 US states.</div>
+              </div>
+            </div>
+          </div>
+          <div class="s05-step">
+            <div>
+              <div class="s05-step-circle">02</div>
+              <div class="s05-step-line"></div>
+            </div>
+            <div class="s05-step-content">
+              <div class="s05-step-title">PUBLISH</div>
+              <div class="s05-step-body">RIN publishes as open national challenge — 90-day application window</div>
+            </div>
+          </div>
+          <div class="s05-step">
+            <div>
+              <div class="s05-step-circle">03</div>
+              <div class="s05-step-line"></div>
+            </div>
+            <div class="s05-step-content">
+              <div class="s05-step-title">SELECT</div>
+              <div class="s05-step-body">5 startups selected · government customer on selection panel</div>
+            </div>
+          </div>
+          <div class="s05-step">
+            <div>
+              <div class="s05-step-circle">04</div>
+              <div class="s05-step-line"></div>
+            </div>
+            <div class="s05-step-content">
+              <div class="s05-step-title">SPRINT</div>
+              <div class="s05-step-body">12 weeks · customer in room weekly · working prototype by week 10</div>
+            </div>
+          </div>
+          <div class="s05-step">
+            <div>
+              <div class="s05-step-circle">05</div>
+            </div>
+            <div class="s05-step-content">
+              <div class="s05-step-title">DEMO DAY</div>
+              <div class="s05-step-body">Live pitch · government customer decides · winner announced</div>
+            </div>
+          </div>
+        </div>
+        <div class="s05-bottom" style="position:relative">
+          <div class="s05-bottom-title">All 5 Teams Leave With Something Real</div>
+          <div class="s05-outcomes">
+            <div class="s05-outcome">
+              <div class="s05-outcome-label winner">Winner</div>
+              <div class="s05-outcome-body">Signed government pilot contract with Cal Fire</div>
+            </div>
+            <div class="s05-outcome" style="position:relative">
+              <div class="s05-outcome-label non">Non-Winners</div>
+              <div class="s05-outcome-body">SBIR grant application + warm handoffs to other Riverside agencies + 6-month soft landing in Riverside</div>
+              <button class="info-btn" style="position:absolute;top:-10px;right:-10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i05b',event)">ℹ</button>
+              <div class="info-panel" id="i05b" style="bottom:36px;right:0;left:auto;transform-origin:bottom right">
+                <button class="info-panel-close" onclick="closeInfo('i05b')">×</button>
+                <div class="info-panel-title">The SBIR Bridge</div>
+                <div class="info-panel-body">SBIR and STTR are federal programs that give $150K–$2M grants to early-stage companies doing government-relevant tech work. The 12 weeks of work a non-winning team did IS their SBIR Phase 1 application — already built, already documented. RIN staff help them file it within 30 days of Demo Day. A 'loss' at Demo Day becomes a federally funded next step.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">WILDFIRE</span>
+      <span class="footer-right">06 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 06 — DEFENSE ===================== -->
+  <div class="slide" id="slide-06" data-label="DEFENSE" data-index="6">
+    <div class="spine" style="background:var(--accent-blue)"></div>
+    <div class="slide-content" style="padding-left:6px">
+      <div class="s06-left">
+        <div class="pill blue">YEAR 02</div>
+        <div class="s06-big">DEFENSE</div>
+        <div class="s06-sub">TECHNOLOGY</div>
+        <div class="gold-rule" style="margin:14px 0"></div>
+        <div class="section-label blue">Government Customer</div>
+        <div style="font-size:18px;font-weight:600;color:var(--white);margin-bottom:2px">NSWC Corona · Inland Empire</div>
+        <div style="font-size:13px;color:var(--white-dim);margin-bottom:2px">Naval Surface Warfare Center, Corona Division</div>
+        <div style="font-size:12px;color:var(--white-muted);margin-bottom:14px">3,900 engineers and scientists</div>
+        <div class="s06-epa-box" style="position:relative">
+          <div class="s06-epa-label">Education Partnership Agreement</div>
+          <div class="s06-epa-date">UCR × NSWC Corona · Signed May 8, 2026</div>
+          <hr class="s06-epa-hr">
+          <div class="s06-epa-quote">"They do not have to leave the Inland Empire to change the world."</div>
+          <div class="s06-epa-attr">— Capt. Joseph Burgon, Commanding Officer</div>
+          <button class="info-btn" style="position:absolute;top:-10px;right:-10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i06a',event)">ℹ</button>
+          <div class="info-panel" id="i06a" style="top:16px;right:-330px;transform-origin:top left">
+            <button class="info-panel-close" onclick="closeInfo('i06a')">×</button>
+            <div class="info-panel-title">What the EPA Actually Enables</div>
+            <div class="info-panel-body">The UCR-NSWC Corona EPA enables joint research proposals, data sharing, student internships at NSWC Corona, and faculty collaborations on defense research. Between 2021-2025, the Navy awarded UCR over $400K in Naval Engineering Education Consortium grants. 169 UCR alumni now work at NAVSEA.</div>
+          </div>
+        </div>
+      </div>
+      <div class="s06-right">
+        <div class="section-label blue">Defense Vertical Elements</div>
+        <div class="s06-cards">
+          <div class="s06-card" id="dc1" style="position:relative">
+            <div class="s06-card-title">OTA — Other Transaction Authority</div>
+            <div class="s06-card-body">Faster than standard FAR procurement. NSWC Corona can issue OTA agreements directly to startups. Other federal agencies can piggyback — one Riverside contract reaches 30+ federal sites.</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i06b',event)">ℹ</button>
+            <div class="info-panel" id="i06b" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i06b')">×</button>
+              <div class="info-panel-title">Why OTA Matters for Startups</div>
+              <div class="info-panel-body">Standard federal procurement (FAR-based) takes 18-36 months and requires extensive past performance documentation. Most startups cannot participate. OTA agreements are not subject to FAR, can be competed in weeks, and allow rapid prototyping with real government customers. NSWC Corona already uses them via the IE Tech Bridge Crucible program.</div>
+            </div>
+          </div>
+          <div class="s06-card" id="dc2">
+            <div class="s06-card-title">IE Tech Bridge &amp; Crucible</div>
+            <div class="s06-card-body">Inland Empire Tech Bridge anchored by NSWC Corona. 18 startups launched. 23 in the pipeline. The defense startup infrastructure already exists — RIN connects it to county.</div>
+          </div>
+          <div class="s06-card" id="dc3">
+            <div class="s06-card-title">Dual-Use Technology</div>
+            <div class="s06-card-body">Civilian applications with defense readiness. The overlap between government operational problems and commercial markets is where the most durable companies form.</div>
+          </div>
+          <div class="s06-card" id="dc4" style="position:relative">
+            <div class="s06-card-title">Navy Tech Bridge Network</div>
+            <div class="s06-card-body">30+ national nodes. Technology proven at Corona has built-in national distribution to every other Tech Bridge — and from there into broader DoD procurement.</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i06c',event)">ℹ</button>
+            <div class="info-panel" id="i06c" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i06c')">×</button>
+              <div class="info-panel-title">The National Distribution Math</div>
+              <div class="info-panel-body">If a startup wins an OTA pilot contract at NSWC Corona, that technology has a pathway to 30+ Navy Tech Bridge nodes nationally. Each node connects to local defense contractors, university partners, and federal installations. One Riverside contract, properly structured, can generate procurement conversations at naval installations from Norfolk to Pearl Harbor.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">DEFENSE</span>
+      <span class="footer-right">07 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 07 — LOGISTICS ===================== -->
+  <div class="slide" id="slide-07" data-label="LOGISTICS" data-index="7">
+    <div class="spine" style="background:var(--accent-green)"></div>
+    <div class="slide-content" style="padding-left:6px">
+      <div class="s07-left">
+        <div class="pill green">YEAR 03</div>
+        <div class="s07-big">LOGISTICS</div>
+        <div class="s07-sub">&amp; SUPPLY CHAIN</div>
+        <div class="gold-rule" style="margin:14px 0"></div>
+        <div class="section-label green">Infrastructure Anchor</div>
+        <div style="font-size:20px;font-weight:600;color:var(--white);margin-bottom:2px">World Logistics Center</div>
+        <div style="font-size:13px;color:var(--white-dim);margin-bottom:2px">Moreno Valley · Riverside County</div>
+        <div class="s07-stat-num" data-countup="40.6" data-suffix="M" data-decimal="1" id="cu-40">0M</div>
+        <div class="s07-stat-unit">square feet</div>
+        <div style="font-size:13px;color:var(--white-muted);margin-top:4px">California's largest logistics hub</div>
+        <div style="font-size:12px;color:var(--white-muted)">$25 billion development · 2,600 acres</div>
+        <div style="font-size:12px;color:var(--white-muted)">20,000 permanent jobs projected</div>
+        <div style="position:relative;margin-top:12px;display:inline-block">
+          <button class="info-btn" style="position:relative;top:0;left:0" onclick="toggleInfo('i07a',event)">ℹ</button>
+          <div class="info-panel" id="i07a" style="top:34px;left:0;transform-origin:top left">
+            <button class="info-panel-close" onclick="closeInfo('i07a')">×</button>
+            <div class="info-panel-title">WLC in Context</div>
+            <div class="info-panel-body">The $25 billion World Logistics Center spans 2,600 acres in Moreno Valley, making it the largest planned logistics and business park in North America. It is also designed to be the largest net-zero GHG logistics development in the US. The facility sits between the Ports of LA/Long Beach and the rest of the continent — making it the natural testing ground for any technology that improves how goods move through the US supply chain.</div>
+          </div>
+        </div>
+      </div>
+      <div class="s07-right">
+        <div class="section-label green">Logistics Vertical Elements</div>
+        <div class="s07-cards">
+          <div class="s07-card" style="position:relative">
+            <div class="s07-card-title">Cooperative Purchasing — NASPO &amp; OMNIA</div>
+            <div class="s07-card-body">National Association of State Procurement Officials cooperative vehicles. One Riverside County adoption puts a solution on a contract that every county in America can access. No new RFP. No new sales cycle. One sale — 3,000+ potential buyers.</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i07b',event)">ℹ</button>
+            <div class="info-panel" id="i07b" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i07b')">×</button>
+              <div class="info-panel-title">How Cooperative Purchasing Works</div>
+              <div class="info-panel-body">When Riverside County adopts a GovTech solution and places it on a NASPO or OMNIA Partners cooperative contract, the vendor doesn't need to sell to each of the 3,000+ counties in America individually. Any other county can simply reference the Riverside contract and buy directly — same price, same terms, zero new procurement process. This is how a startup tested at WLC can deploy nationally in 12 months.</div>
+            </div>
+          </div>
+          <div class="s07-card">
+            <div class="s07-card-title">County Government Procurement</div>
+            <div class="s07-card-body">Riverside County fleet management, public works technology, and warehouse operations are direct GovTech challenge customers with real procurement budgets already allocated.</div>
+          </div>
+          <div class="s07-card" style="position:relative">
+            <div class="s07-card-title">Labor &amp; Workforce Balance</div>
+            <div class="s07-card-body">Logistics automation carries real displacement risk. Cohort design includes worker upskilling technology alongside automation — labor partners engaged from day one.</div>
+            <button class="info-btn" style="position:absolute;top:10px;right:10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i07c',event)">ℹ</button>
+            <div class="info-panel" id="i07c" style="top:36px;right:0;left:auto;transform-origin:top right">
+              <button class="info-panel-close" onclick="closeInfo('i07c')">×</button>
+              <div class="info-panel-title">The Teamsters Consideration</div>
+              <div class="info-panel-body">The logistics vertical carries genuine labor displacement risk. Warehouse automation and AI routing directly affect Teamsters and SEIU members who make up a significant share of WLC's workforce. RIN proactively engages labor partners before the cohort launches — not after. Cohort challenges are designed to include worker safety, upskilling, and career-pathway technology alongside automation. This makes RIN politically durable in a way a pure automation pitch never could be.</div>
+            </div>
+          </div>
+          <div class="s07-card">
+            <div class="s07-card-title">March Air Reserve Base</div>
+            <div class="s07-card-body">9,600 employees. Protected from base closure (BRAC). Airlift logistics and supply chain management — natural Year 3 cohort customer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">LOGISTICS</span>
+      <span class="footer-right">08 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 08 — THE VISION ===================== -->
+  <div class="slide" id="slide-08" data-label="THE VISION" data-index="8">
+    <div class="spine" style="background:var(--gold)"></div>
+    <div class="slide-content" style="padding-left:16px">
+      <div style="display:flex;flex-direction:column;height:100%;padding:24px 36px 12px 36px;position:relative">
+        <div class="s08-concentric concentric-wrap" style="width:340px;height:340px">
+          <svg viewBox="0 0 340 340" width="340" height="340" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="170" cy="170" r="50" fill="none" stroke="#C9973A" stroke-width="1"/>
+            <circle cx="170" cy="170" r="85" fill="none" stroke="#C9973A" stroke-width="0.8"/>
+            <circle cx="170" cy="170" r="120" fill="none" stroke="#C9973A" stroke-width="0.6"/>
+            <circle cx="170" cy="170" r="155" fill="none" stroke="#C9973A" stroke-width="0.5"/>
+            <circle cx="170" cy="170" r="170" fill="none" stroke="#C9973A" stroke-width="0.4"/>
+          </svg>
+        </div>
+        <div class="s08-header">
+          <div class="section-label">Long-Term Strategy</div>
+          <div class="slide-title">THE VISION</div>
+          <div class="slide-subtitle">Build here. Test here. Deploy everywhere. Stay headquartered in Riverside.</div>
+        </div>
+        <div class="section-label" style="margin:12px 0 10px;color:var(--white-muted)">Three-Phase National Strategy</div>
+        <div class="s08-cards" style="flex:1">
+          <div class="s08-phase-card" style="position:relative">
+            <span class="s08-phase-badge gold">01 – 03</span>
+            <div class="s08-phase-title">BUILD &amp; PROVE</div>
+            <ul class="s08-phase-bullets">
+              <li>Challenge cohorts running</li>
+              <li>Government pilots signed</li>
+              <li>Retention baseline established</li>
+              <li>Model proven locally</li>
+            </ul>
+            <button class="info-btn" style="position:absolute;bottom:12px;right:12px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i08a',event)">ℹ</button>
+            <div class="info-panel" id="i08a" style="bottom:40px;right:0;left:auto;transform-origin:bottom right">
+              <button class="info-panel-close" onclick="closeInfo('i08a')">×</button>
+              <div class="info-panel-title">The Detroit Model</div>
+              <div class="info-panel-body">Ford didn't move to every city that needed a car. It built cars in Detroit and shipped them everywhere. The Riverside model is identical — build and prove GovTech solutions here, then deploy them nationally, while keeping the companies, the jobs, and the tax base in Riverside County. The WLC, Cal Fire, and NSWC Corona are the factory floor. The rest of America is the market.</div>
+            </div>
+          </div>
+          <div class="s08-arrow">→</div>
+          <div class="s08-phase-card" style="position:relative">
+            <span class="s08-phase-badge blue">04 – 06</span>
+            <div class="s08-phase-title">NATIONAL TESTING GROUND</div>
+            <ul class="s08-phase-bullets">
+              <li>Outside startups come TO Riverside</li>
+              <li>Cal Fire and NSWC Corona as validation anchors</li>
+              <li>No other region can replicate this combination</li>
+              <li>Riverside becomes the proof-of-concept environment</li>
+            </ul>
+            <button class="info-btn" style="position:absolute;bottom:12px;right:12px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i08b',event)">ℹ</button>
+            <div class="info-panel" id="i08b" style="bottom:40px;right:0;left:auto;transform-origin:bottom right">
+              <button class="info-panel-close" onclick="closeInfo('i08b')">×</button>
+              <div class="info-panel-title">Why Outside Startups Will Come Here</div>
+              <div class="info-panel-body">By Year 3, Riverside has something no other region can offer — Cal Fire (the most credible wildfire agency in the world), NSWC Corona (3,900 engineers with active procurement authority), and the World Logistics Center (40.6M sqft of live logistics infrastructure) all within 30 miles of each other. A startup that needs to test its product against a real government customer doesn't have to go to Washington DC or Silicon Valley. It comes to Riverside.</div>
+            </div>
+          </div>
+          <div class="s08-arrow">→</div>
+          <div class="s08-phase-card" style="position:relative">
+            <span class="s08-phase-badge green">07 – 10</span>
+            <div class="s08-phase-title">EXPORT AT SCALE</div>
+            <ul class="s08-phase-bullets">
+              <li>Riverside-HQ companies deploy nationally</li>
+              <li>OTA and NASPO as distribution channels</li>
+              <li>Jobs here, revenue from everywhere</li>
+              <li>Graduate retention measurably improved</li>
+            </ul>
+            <button class="info-btn" style="position:absolute;bottom:12px;right:12px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i08c',event)">ℹ</button>
+            <div class="info-panel" id="i08c" style="bottom:40px;right:0;left:auto;transform-origin:bottom right">
+              <button class="info-panel-close" onclick="closeInfo('i08c')">×</button>
+              <div class="info-panel-title">The NASPO + OTA Combination</div>
+              <div class="info-panel-body">OTA contracts allow other federal agencies to piggyback on a competed prototype award. NASPO cooperative purchasing allows other counties to adopt a solution without new procurement. A startup that wins both a Cal Fire OTA and a Riverside County NASPO contract simultaneously has immediate access to every state fire agency and every county government in America. That is what national scale looks like from a Riverside starting point.</div>
+            </div>
+          </div>
+        </div>
+        <div class="s08-quote">"Detroit stayed in Detroit. Huntsville became America's Rocket City. Riverside becomes America's GovTech City."</div>
+        <div class="s08-timeline-wrap">
+          <div class="s08-timeline-bar">
+            <div class="s08-timeline-fill" id="timeline-fill"></div>
+          </div>
+          <div class="s08-timeline-labels">
+            <span>YEAR 1</span><span>YEAR 3</span><span>YEAR 5</span><span>YEAR 7</span><span>YEAR 10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">THE VISION</span>
+      <span class="footer-right">09 / 10</span>
+    </div>
+  </div>
+
+  <!-- ===================== SLIDE 09 — CLOSING ===================== -->
+  <div class="slide" id="slide-09" data-label="CLOSING" data-index="9">
+    <div class="slide-content" style="display:flex;flex-direction:column">
+      <div class="s09-upper" id="s09-upper" style="opacity:0;transition:opacity 0.8s ease">
+        <div class="section-label gold">The Window Is Now</div>
+        <div class="s09-timing-cards" style="position:relative">
+          <div class="s09-timing-card">
+            <div class="s09-timing-date">MAY 2026</div>
+            <div class="s09-timing-body">UCR × NSWC Corona EPA signed at Mission Inn</div>
+          </div>
+          <div class="s09-timing-card">
+            <div class="s09-timing-date">2026</div>
+            <div class="s09-timing-body">EDSP 2026-2030 Finalized &amp; ready to implement</div>
+          </div>
+          <div class="s09-timing-card">
+            <div class="s09-timing-date">12-24 MO</div>
+            <div class="s09-timing-body">EDA Tech Hubs Designation window open now</div>
+          </div>
+          <div class="s09-timing-card" style="position:relative">
+            <div class="s09-timing-date">SPRING 2027</div>
+            <div class="s09-timing-body">OASIS Park opens. RIN must be established first.</div>
+            <button class="info-btn" style="position:absolute;top:-10px;right:-10px;width:22px;height:22px;font-size:11px" onclick="toggleInfo('i09a',event)">ℹ</button>
+            <div class="info-panel" id="i09a" style="top:16px;right:0;left:auto;transform-origin:top right;width:300px">
+              <button class="info-panel-close" onclick="closeInfo('i09a')">×</button>
+              <div class="info-panel-title">Why Spring 2027 is a Hard Deadline</div>
+              <div class="info-panel-body">SoCal OASIS Park is a $68 million UCR-led innovation park opening Spring 2027. The moment it opens it becomes the dominant narrative in Riverside's innovation ecosystem. RIN must be established and operational before that ribbon-cutting, positioned as the coordination layer that makes OASIS more effective — not an afterthought created in OASIS's shadow.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="s09-lower">
+        <div class="s09-line" id="s09-l1">RIVERSIDE HAS THE RESEARCH.</div>
+        <div class="s09-line" id="s09-l2" style="transition-delay:0.15s">RIVERSIDE HAS THE GOVERNMENT CUSTOMER.</div>
+        <div class="s09-line" id="s09-l3" style="transition-delay:0.3s">RIVERSIDE HAS THE TALENT.</div>
+        <div class="gold-rule full" style="margin:16px 0;opacity:0;transition:opacity 0.8s ease" id="s09-rule"></div>
+        <div class="s09-tagline" id="s09-tag" style="transition:opacity 0.8s ease, transform 0.8s ease">What it needs is the coordination layer that keeps all three in the same room.</div>
+        <div class="s09-contact-row" id="s09-contact" style="margin-top:auto;opacity:0;transition:opacity 0.8s ease">
+          <div style="display:flex;align-items:flex-end;gap:18px">
+            <div class="s09-qr-panel">
+              <div class="s09-qr-label">SCAN</div>
+              <div id="qr-code" class="s09-qr-code"></div>
+              <div class="s09-qr-email">dheeraj.kanneganti17@gmail.com</div>
+              <div class="s09-qr-phone">(951) 263-5894</div>
+            </div>
+            <div style="position:relative;display:inline-block;padding-bottom:4px">
+              <button class="info-btn" style="position:relative;top:0;left:0" onclick="toggleInfo('i09b',event)">ℹ</button>
+              <div class="info-panel" id="i09b" style="bottom:34px;left:0;transform-origin:bottom left">
+                <button class="info-panel-close" onclick="closeInfo('i09b')">×</button>
+                <div class="info-panel-title">What Makes Riverside Uniquely Positioned</div>
+                <div class="info-panel-body">Most cities trying to build innovation ecosystems have to manufacture a reason to exist. Riverside doesn't. NSWC Corona has 3,900 engineers and active OTA procurement authority. Cal Fire's Southern Region HQ defines real operational problems with real budgets. WLC is $25 billion of logistics infrastructure. UCR produced 169 startups with $16M raised in a single year. The assets are here. The coordination layer is not.</div>
+              </div>
+            </div>
+          </div>
+          <div class="s09-rin-mark">
+            <div class="s09-rin-name">RIN</div>
+            <div class="s09-rin-sub">Riverside Innovation Network</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="footer-left">RIVERSIDE INNOVATION NETWORK · FOUNDATION PLAN &amp; IMPLEMENTATION</span>
+      <span class="footer-center">CLOSING</span>
+      <span class="footer-right">10 / 10</span>
+    </div>
+  </div>
+
+</div><!-- #slides -->
+
+<!-- Navigation -->
+<button class="nav-arrow" id="nav-prev" onclick="navigate(-1)">&#8592;</button>
+<button class="nav-arrow" id="nav-next" onclick="navigate(1)">&#8594;</button>
+
+<div id="dots"></div>
+<div id="key-hint">← →  navigate</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let current = 0;
+const TOTAL = 10;
+const animated = new Set();
+
+// ============================================================
+// INIT DOTS
+// ============================================================
+const dotsEl = document.getElementById('dots');
+for (let i = 0; i < TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+
+// ============================================================
+// PROGRESS BAR
+// ============================================================
+function updateProgress(idx) {
+  document.getElementById('progress-bar').style.width = ((idx + 1) / TOTAL * 100) + '%';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= TOTAL) return;
+  goTo(next);
+}
+
+function goTo(idx) {
+  if (idx === current) return;
+  const slides = document.querySelectorAll('.slide');
+  closeAllInfo();
+
+  const old = current;
+  current = idx;
+
+  // Outgoing slide: animate out, then fully reset once the transition ends.
+  slides[old].classList.remove('active');
+  slides[old].classList.add('out');
+  setTimeout(() => slides[old].classList.remove('out'), 650);
+
+  // Incoming slide: ensure it never carries a stale 'out' class.
+  slides[current].classList.remove('out');
+  slides[current].classList.add('active');
+
+  // Dots
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+  });
+
+  updateProgress(current);
+  triggerAnimations(current);
+  refreshMapIfActive(current);
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') navigate(1);
+  else if (e.key === 'ArrowLeft') navigate(-1);
+  else if (e.key === 'Escape') closeAllInfo();
+});
+
+// ============================================================
+// KEYBOARD HINT FADE
+// ============================================================
+setTimeout(() => {
+  const hint = document.getElementById('key-hint');
+  hint.style.opacity = '0';
+}, 3000);
+
+// ============================================================
+// INFO PANELS
+// ============================================================
+function toggleInfo(id, e) {
+  e.stopPropagation();
+  const panel = document.getElementById(id);
+  const isOpen = panel.classList.contains('open');
+  closeAllInfo();
+  if (isOpen) return;
+
+  const icon = e.currentTarget;
+  const r = icon.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const MARGIN = 20;
+  const GAP = 12;
+
+  // Re-parent to <body> so position:fixed resolves against the viewport,
+  // never against a transformed ancestor (cards/slides use transforms).
+  if (panel.parentElement !== document.body) document.body.appendChild(panel);
+
+  // On small screens the CSS bottom-sheet rules take over (via !important).
+  if (vw < 768) {
+    panel.classList.add('open');
+    return;
+  }
+
+  // Make the panel measurable, then size-aware position it.
+  panel.style.right = 'auto';
+  panel.style.bottom = 'auto';
+  panel.style.left = '-9999px';
+  panel.style.top = '0px';
+  panel.classList.add('open');
+
+  const pw = Math.min(panel.offsetWidth || 320, 320);
+  const ph = Math.min(panel.offsetHeight || 200, 280);
+
+  const onRight = r.left + r.width / 2 > vw / 2;
+  const onBottom = r.top + r.height / 2 > vh * 0.65;
+
+  // Horizontal: open left of icon if it sits in the right half.
+  let left = onRight ? (r.left - GAP - pw) : (r.right + GAP);
+  // Vertical: open upward if icon sits in the bottom third.
+  let top = onBottom ? (r.bottom - ph) : r.top;
+
+  // Clamp to stay >= MARGIN from every edge.
+  left = Math.max(MARGIN, Math.min(left, vw - pw - MARGIN));
+  top = Math.max(MARGIN, Math.min(top, vh - ph - MARGIN));
+
+  panel.style.transformOrigin = (onBottom ? 'bottom ' : 'top ') + (onRight ? 'right' : 'left');
+  panel.style.left = left + 'px';
+  panel.style.top = top + 'px';
+}
+
+function closeInfo(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function closeAllInfo() {
+  document.querySelectorAll('.info-panel.open').forEach(p => p.classList.remove('open'));
+}
+
+document.addEventListener('click', closeAllInfo);
+
+// ============================================================
+// COUNT-UP
+// ============================================================
+function countUp(el, target, suffix, decimal) {
+  const duration = 1500;
+  const start = performance.now();
+  const isDecimal = !!decimal;
+
+  function step(now) {
+    const elapsed = Math.min(now - start, duration);
+    const progress = elapsed / duration;
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const value = target * ease;
+    el.textContent = isDecimal ? value.toFixed(1) + suffix : Math.floor(value) + suffix;
+    if (elapsed < duration) requestAnimationFrame(step);
+    else el.textContent = (isDecimal ? target.toFixed(1) : target) + suffix;
+  }
+  requestAnimationFrame(step);
+}
+
+// ============================================================
+// QR CODE
+// ============================================================
+let qrRendered = false;
+function initQR() {
+  if (qrRendered) return;
+  qrRendered = true;
+  new QRCode(document.getElementById('qr-code'), {
+    text: 'https://my-landing-page-phi-seven.vercel.app/',
+    width: 140,
+    height: 140,
+    colorDark: '#C9973A',
+    colorLight: '#0D1B2E',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+// ============================================================
+// LEAFLET MAP
+// ============================================================
+let mapRendered = false;
+function initMap() {
+  if (mapRendered || typeof L === 'undefined') return;
+  mapRendered = true;
+
+  const map = L.map('rin-map', {
+    center: [33.9806, -117.3755],
+    zoom: 10,
+    zoomControl: true,
+    attributionControl: true,
+    scrollWheelZoom: false
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 19
+  }).addTo(map);
+
+  const sites = [
+    { lat: 33.8753, lng: -117.5664, color: '#3A7CA5', name: 'NSWC Corona', fact: 'Naval Surface Warfare Center · 3,900 Engineers' },
+    { lat: 33.9425, lng: -117.3961, color: '#9B2020', name: 'Cal Fire HQ', fact: 'Cal Fire Southern Region · Government Customer Year 1' },
+    { lat: 33.9737, lng: -117.3281, color: '#256B45', name: 'UCR Campus', fact: 'UC Riverside · Research Anchor · OASIS 2027' },
+    { lat: 33.8806, lng: -117.2597, color: '#3A7CA5', name: 'March ARB', fact: 'March Air Reserve Base · 9,600 Employees' },
+    { lat: 33.9172, lng: -117.2156, color: '#256B45', name: 'World Logistics Center', fact: 'World Logistics Center · 40.6M sqft · Year 3' },
+    { lat: 33.9806, lng: -117.3755, color: '#C9973A', name: 'ExCITE Downtown', fact: 'ExCITE Innovation Hub · RIN Home Base' }
+  ];
+
+  const latlngs = [];
+  sites.forEach(s => {
+    latlngs.push([s.lat, s.lng]);
+    const icon = L.divIcon({
+      className: '',
+      html: '<div class="rin-marker">' +
+              '<div class="rin-marker-ring" style="border-color:' + s.color + '"></div>' +
+              '<div class="rin-marker-dot" style="background:' + s.color + ';color:' + s.color + '"></div>' +
+            '</div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+    L.marker([s.lat, s.lng], { icon })
+      .addTo(map)
+      .bindPopup('<div class="rin-popup-title">' + s.name + '</div>' + s.fact);
+  });
+
+  // Thin gold dashed proximity line connecting all 6 points.
+  L.polyline(latlngs, {
+    color: '#C9973A', weight: 1.5, opacity: 0.8, dashArray: '6 8'
+  }).addTo(map);
+
+  window._rinMap = map;
+  // Ensure correct sizing after the slide becomes visible.
+  setTimeout(() => map.invalidateSize(), 250);
+}
+
+// ============================================================
+// SLIDE-SPECIFIC ANIMATIONS
+// ============================================================
+function triggerAnimations(idx) {
+  // Map needs invalidateSize on every visit (tiles mis-render if hidden).
+  if (idx === 2 && mapRendered) {
+    // already built; nothing further needed
+  }
+
+  if (animated.has(idx)) return;
+  animated.add(idx);
+
+  if (idx === 0) {
+    // Cover: GSAP stagger entrance
+    if (typeof gsap !== 'undefined') {
+      gsap.from('#s01-badge', { x: -40, opacity: 0, duration: 0.6, delay: 0.1 });
+      gsap.from('#s01-title .s01-title-line', { x: -60, opacity: 0, duration: 0.7, stagger: 0.12, delay: 0.2 });
+      gsap.from('#s01-sub', { x: -40, opacity: 0, duration: 0.6, delay: 0.6 });
+      gsap.from('#s01-sub2', { x: -40, opacity: 0, duration: 0.6, delay: 0.75 });
+      gsap.from('#s01-ghost', { opacity: 0, duration: 1.2, delay: 0.4 });
+    }
+  }
+
+  if (idx === 1) {
+    // Count-up slide 02
+    const el80 = document.getElementById('cu-80k');
+    const el23 = document.getElementById('cu-23');
+    const el9 = document.getElementById('cu-9');
+    setTimeout(() => {
+      countUp(el80, 80000, '');
+      countUp(el23, 23, '%');
+      countUp(el9, 9, '+');
+    }, 200);
+  }
+
+  if (idx === 2) {
+    // Geography map
+    setTimeout(initMap, 300);
+  }
+
+  if (idx === 3) {
+    // Function cards stagger
+    ['fc1','fc2','fc3','fc4','fc5'].forEach((id, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('animated');
+      }, 200 + i * 100);
+    });
+  }
+
+  if (idx === 4) {
+    // Partner cards (no animation needed — static)
+  }
+
+  if (idx === 6) {
+    // Defense cards slide in
+    ['dc1','dc2','dc3','dc4'].forEach((id, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('animated');
+      }, 200 + i * 120);
+    });
+  }
+
+  if (idx === 7) {
+    // Logistics count-up
+    const el = document.getElementById('cu-40');
+    setTimeout(() => countUp(el, 40.6, 'M', true), 300);
+  }
+
+  if (idx === 8) {
+    // Timeline fill
+    setTimeout(() => {
+      document.getElementById('timeline-fill').style.width = '100%';
+    }, 400);
+  }
+
+  if (idx === 9) {
+    initQR();
+    // SILENCE BEAT — show only the three lines for 2.5s, then fade in the rest.
+    const l1 = document.getElementById('s09-l1');
+    const l2 = document.getElementById('s09-l2');
+    const l3 = document.getElementById('s09-l3');
+    const rule = document.getElementById('s09-rule');
+    const tag = document.getElementById('s09-tag');
+    const upper = document.getElementById('s09-upper');
+    const contact = document.getElementById('s09-contact');
+
+    setTimeout(() => l1 && l1.classList.add('animated'), 300);
+    setTimeout(() => l2 && l2.classList.add('animated'), 800);
+    setTimeout(() => l3 && l3.classList.add('animated'), 1300);
+
+    setTimeout(() => {
+      if (upper) upper.style.opacity = '1';
+      if (contact) contact.style.opacity = '1';
+      if (rule) rule.style.opacity = '1';
+      if (tag) tag.classList.add('animated');
+    }, 2500);
+  }
+}
+
+// Re-fix map tile sizing whenever the geography slide is shown.
+function refreshMapIfActive(idx) {
+  if (idx === 2 && mapRendered && window._rinMap) {
+    setTimeout(() => window._rinMap.invalidateSize(), 250);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateProgress(0);
+// Trigger slide 0 animations on load
+setTimeout(() => triggerAnimations(0), 100);
+</script>
+</body>
+</html>
